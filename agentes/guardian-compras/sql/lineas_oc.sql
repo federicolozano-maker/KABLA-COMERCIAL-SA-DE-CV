@@ -11,5 +11,6 @@ SELECT t.id oc_id, t.tranid oc, BUILTIN.DF(t.entity) proveedor, t.entity proveed
   (SELECT MIN(h.rate) FROM transaction ho JOIN transactionLine h ON h.transaction = ho.id WHERE ho.type = 'PurchOrd' AND ho.entity = t.entity AND h.item = tl.item AND h.mainline = 'F' AND h.rate > 0 AND ho.id <> t.id AND ho.trandate >= ADD_MONTHS(SYSDATE,-12)) mejor_precio_12m
 FROM transaction t JOIN transactionLine tl ON tl.transaction = t.id JOIN item i ON i.id = tl.item
 WHERE t.type = 'PurchOrd' AND tl.mainline = 'F' AND i.itemtype = 'InvtPart'
+  AND NVL(BUILTIN.DF(i.custitem3),'-') NOT IN ('Unidad Logística - No Vendible','UNIDAD LOGISTICA - NO VENDIBLE','Unidad de Medida de Logistica','Uso exclusivo almacen','Uso exclusivo de taller','Uso exclusivo taller','PRODUCTO / SERVICIO NO COMERCIALIZABLE','Activo Fijo')
   AND t.trandate >= TO_DATE(':DESDE','YYYY-MM-DD') AND t.trandate <= TO_DATE(':HASTA','YYYY-MM-DD')
 ORDER BY t.tranid, tl.id

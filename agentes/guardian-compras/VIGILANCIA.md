@@ -4,7 +4,7 @@ Corre en días hábiles a las 08:58, 12:58 y 16:58 (hora de Monterrey). Solo lee
 
 ## Pasos
 1. Lee el último id interno revisado en `bitacora/guardian-ultimo-id-oc.txt`.
-2. Busca órdenes de compra nuevas (`transaction.type = 'PurchOrd' AND transaction.id > <último id>`) con líneas de artículos de inventario (`item.itemtype = 'InvtPart'`). Si no hay, termina sin notificar.
+2. Busca órdenes de compra nuevas (`transaction.type = 'PurchOrd' AND transaction.id > <último id>`) con líneas de mercancía para venta: artículos de inventario (`item.itemtype = 'InvtPart'`) cuyo tipo de producto no sea suministro interno (Unidad Logística - No Vendible, Unidad de Medida de Logística, Uso exclusivo almacén/taller, Producto/servicio no comercializable, Activo fijo). Las compras de suministros, servicios y gastos no se revisan ni se reportan. Si no hay, termina sin notificar.
 3. Trae por línea: OC, proveedor, proveedor_id, item, artículo, tipo de producto (custitem3), cantidad, rate (pesos), fecha esperada de llegada, cantidad ya recibida.
 4. Para los artículos de esas líneas (lista explícita de ids en `IN (...)`; las consultas sin lista explícita tardan más de 60 s), trae por separado: stock vendible, en tránsito (OC abiertas de 6 meses), venta facturada 12 meses, pedidos de cliente abiertos (6 meses), DISTRIBUIDOR IV y mejor precio del mismo proveedor en 12 meses. Si un resultado es muy grande, agrega `RPAD('x', 2000, 'x') pad` para que se guarde en archivo y léelo con python.
 5. Arma `lineas.json` (stock vendible menos lo ya recibido de la misma línea) y corre:

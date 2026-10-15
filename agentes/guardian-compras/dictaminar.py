@@ -17,6 +17,10 @@ MARGEN_MIN_ANALIZADOR = 0.10
 BASICO = {"De Linea - Basico", "De Linea", "De Linea - Variable"}
 BAJO_PEDIDO = {"Bajo pedido", "Bajo pedido especial", "Bajo Proyecto"}
 SIN_COMPRA = {"Descontinuado", "Hasta Agotar Existencias", "Outlet"}
+# Suministros internos: no son mercancía para venta y el guardián no los revisa
+SUMINISTROS = {"Unidad Logística - No Vendible", "UNIDAD LOGISTICA - NO VENDIBLE", "Unidad de Medida de Logistica",
+               "Uso exclusivo almacen", "Uso exclusivo de taller", "Uso exclusivo taller",
+               "PRODUCTO / SERVICIO NO COMERCIALIZABLE", "Activo Fijo"}
 LIMITE_FIRMA_USD = 5000  # OC aprobadas completas debajo de este monto las firma el gerente de compras
 TIPO_CAMBIO = float(os.environ.get("TIPO_CAMBIO_USD", "18.5"))
 
@@ -200,7 +204,7 @@ def excel(res, fecha, salida, logo):
 
 
 if __name__ == "__main__":
-    lineas = json.load(open(sys.argv[1]))
+    lineas = [l for l in json.load(open(sys.argv[1])) if (l.get("tipo_producto") or "") not in SUMINISTROS]
     fecha = sys.argv[2]
     salida = sys.argv[3] if len(sys.argv) > 3 else "entregables/dictamenes"
     logo = sys.argv[4] if len(sys.argv) > 4 else os.path.join(os.path.dirname(__file__), "kabla_wordmark_orange.png")

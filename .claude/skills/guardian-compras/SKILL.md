@@ -13,6 +13,9 @@ Estado: reglas cerradas el 15-oct-2026. Pendiente: vida útil por artículo para
 - Por línea: artículo, tipo de producto (custitem3), cantidad, precio (rate, en pesos), proveedor, fecha esperada de llegada. El importe en pesos es cantidad × rate (netamount viene en la moneda del proveedor).
 - Inventario vendible y venta 12 meses (definiciones de CLAUDE.md), órdenes abiertas de clientes y lotes con caducidad.
 
+## Alcance
+Solo mercancía para venta. No revisa compras de suministros internos (cajas, etiquetas, uso de almacén o taller, activo fijo), servicios ni gastos.
+
 ## Reglas (Dirección General, 15-oct-2026)
 1. Cobertura según tipo de producto (custitem3):
    - De Línea – Básico (y De Línea, De Línea – Variable): días de inventario después de la compra = (stock vendible + en tránsito + cantidad de la OC) / venta diaria ≤ 180. Si se pasa, reduce a la cantidad que deja 180 días.
