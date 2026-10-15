@@ -5,6 +5,7 @@ lineas.json: lista de filas devueltas por sql/lineas_oc.sql.
 Reglas: ver .claude/skills/guardian-compras/SKILL.md.
 """
 import json, math, sys, os
+from datetime import date, datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.drawing.image import Image
@@ -27,6 +28,18 @@ def n(x):
         return 0.0
 
 
+def parse_fecha(txt):
+    for fmt in ("%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(str(txt), fmt).date()
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+HOY = date.today()
+
+
 def dictaminar(l):
     cant, precio = n(l.get("cant")), n(l.get("precio"))
     stock, transito = n(l.get("stock_vendible")), n(l.get("en_transito"))
@@ -43,7 +56,7 @@ def dictaminar(l):
         cap = max(0, math.floor(pedidos - stock - transito))
         if cap <= 0:
             aprob, decision = 0, "RECHAZAR"
-            razones.append(f"{tipo}: no hay pedidos de cliente sin surtir que no cubran el stock ({stock:,.0f}) y lo en tránsito ({transito:,.0f}). Todo lo que llegue es sobreinventario.")
+            razones.append(f"{tipo}: no hay pedidos de cliente abiertos (6 meses) que justifiquen la compra; stock {stock:,.0f}, en tránsito {transito:,.0f}. Si es para licitación o contrato, Compras debe ligar la OC al pedido.")
         elif cap < cant:
             aprob, decision = cap, "REDUCIR"
             razones.append(f"{tipo}: solo {cap:,.0f} piezas están respaldadas por pedidos de cliente abiertos.")
@@ -52,20 +65,25 @@ def dictaminar(l):
             aprob, decision = 0, "RECHAZAR"
             razones.append("Producto básico sin venta en 12 meses.")
         else:
-            cap = math.floor(COBERTURA_MAX_DIAS * vd - stock - transito)
-            dias = (stock + transito + cant) / vd
+            llega = parse_fecha(l.get("llegada"))
+            dias_llegada = max(0, (llega - HOY).days) if llega else 0
+            proyectado = max(0.0, stock + transito - vd * dias_llegada)
+            cap = math.floor(COBERTURA_MAX_DIAS * vd - proyectado)
+            dias = (proyectado + cant) / vd
             if cap <= 0:
                 aprob, decision = 0, "RECHAZAR"
-                razones.append(f"Ya hay {(stock + transito) / vd:,.0f} días de inventario entre stock y tránsito; el tope es {COBERTURA_MAX_DIAS}.")
+                razones.append(f"Al llegar ({dias_llegada} días) todavía habrá {proyectado / vd:,.0f} días de inventario entre stock y tránsito; el tope es {COBERTURA_MAX_DIAS}.")
             elif cap < cant:
                 aprob, decision = cap, "REDUCIR"
-                razones.append(f"Con la orden completa quedarían {dias:,.0f} días de inventario; {cap:,.0f} piezas dejan {COBERTURA_MAX_DIAS}.")
+                razones.append(f"Al llegar quedarían {dias:,.0f} días de inventario; {cap:,.0f} piezas dejan {COBERTURA_MAX_DIAS}.")
     elif tipo == "De Linea - Emergente":
         notas.append("Emergente: sin tope de cobertura.")
     else:
         notas.append(f"Tipo '{tipo}': sin regla de cobertura.")
 
     es_analizador = articulo.lower().startswith(("analizador", "contador"))
+    if es_analizador:
+        notas.append("Analizador: la venta facturada no incluye equipos colocados en comodato; validar demanda con Comercial antes de firmar.")
     if es_analizador and precio > 0 and decision != "RECHAZAR":
         if dist_iv <= 0:
             notas.append("Analizador sin precio DISTRIBUIDOR IV: margen no verificable, revisar.")
