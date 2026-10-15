@@ -17,6 +17,8 @@ MARGEN_MIN_ANALIZADOR = 0.10
 BASICO = {"De Linea - Basico", "De Linea", "De Linea - Variable"}
 BAJO_PEDIDO = {"Bajo pedido", "Bajo pedido especial", "Bajo Proyecto"}
 SIN_COMPRA = {"Descontinuado", "Hasta Agotar Existencias", "Outlet"}
+LIMITE_FIRMA_USD = 5000  # OC aprobadas completas debajo de este monto las firma el gerente de compras
+TIPO_CAMBIO = float(os.environ.get("TIPO_CAMBIO_USD", "18.5"))
 
 ROYAL, ONYX, SEASHELL, PLATINIUM, GINGER_T, ROYAL_T, INK = "FF8000", "444444", "FFF6F2", "DEDEDE", "FFDECB", "FBD7BD", "AD5600"
 
@@ -204,6 +206,19 @@ if __name__ == "__main__":
     logo = sys.argv[4] if len(sys.argv) > 4 else os.path.join(os.path.dirname(__file__), "kabla_wordmark_orange.png")
     res = [dictaminar(l) for l in lineas]
     ruta, nocs, tot, fren = excel(res, fecha, salida, logo)
+    por_oc = {}
+    for r in res:
+        o = por_oc.setdefault(r["oc"], {"oc": r["oc"], "proveedor": r["proveedor"], "importe": 0.0, "frenado": 0.0, "decisiones": set()})
+        o["importe"] += r["importe"]; o["frenado"] += r["frenado"]; o["decisiones"].add(r["decision"])
+    for o in por_oc.values():
+        limpia = o["decisiones"] == {"APROBAR"}
+        o["usd"] = round(o["importe"] / TIPO_CAMBIO)
+        o["firma"] = "Gerente de compras" if limpia and o["usd"] < LIMITE_FIRMA_USD else "Dirección General"
+        o["dictamen"] = "OK" if limpia else "REVISAR"
+        o["decisiones"] = sorted(o["decisiones"])
+    json.dump(sorted(por_oc.values(), key=lambda o: (o["dictamen"] == "OK", -o["frenado"])), open(ruta.replace(".xlsx", "-por-oc.json"), "w"), ensure_ascii=False, indent=1)
     cuenta = {k: sum(r["decision"] == k for r in res) for k in ("APROBAR", "REDUCIR", "RECHAZAR")}
     print(json.dumps({"archivo": ruta, "ordenes": nocs, "lineas": len(res), **cuenta, "monto_pedido": round(tot), "monto_frenado": round(fren),
-                      "renegociar": round(sum(r["renegociar"] for r in res))}, ensure_ascii=False))
+                      "renegociar": round(sum(r["renegociar"] for r in res)),
+                      "firma_gerente": sum(o["firma"] == "Gerente de compras" for o in por_oc.values()),
+                      "firma_direccion": sum(o["firma"] == "Dirección General" for o in por_oc.values())}, ensure_ascii=False))
