@@ -28,6 +28,7 @@ FROM (
   SELECT i.id, i.itemid articulo,
     CASE
       WHEN LOWER(i.itemid) LIKE 'alcoholimetro%' OR LOWER(i.itemid) LIKE 'alcoholímetro%' THEN 'ALCOHOLIMETRO'
+      WHEN BUILTIN.DF(i.custitem3) = 'Refacciones' THEN 'CONSUMIBLE'
       WHEN i.isserialitem = 'T' OR BUILTIN.DF(i.class) = 'Equipos' OR NVL(NULLIF(i.averagecost,0), i.lastpurchaseprice) >= 50000 THEN 'EQUIPO'
       ELSE 'CONSUMIBLE'
     END tipo,

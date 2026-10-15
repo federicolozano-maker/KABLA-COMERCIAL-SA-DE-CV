@@ -13,7 +13,8 @@ Repositorio de los agentes de Kabla Comercial, S.A. de C.V. Todo dato sale de Ne
 - Inventario vendible: ALMACEN LINDAVISTA, ALMACEN CIUDAD DE MEXICO, ALMACEN GUADALAJARA, ALMACEN TIJUANA, KABLA ALMACEN MATRIZ, KABLA CADUCIDAD CORTA. Nunca NO CONFORME, PROYECTO, CUARENTENA, DEMOS, PRESTAMO, REACONDICIONADO ni activo fijo.
 - Días de inventario = stock vendible / (venta facturada 12 meses / 365). Alta rotación < 90 días; sobreinventario > 180 días.
 - Rango de precio: DISTRIBUIDOR IV (piso) a LISTA.
-- Equipo = artículo con número de serie, clase "Equipos" o costo ≥ $50,000. Los alcoholímetros NO son equipos.
+- Equipo = artículo con número de serie, clase "Equipos" o costo ≥ $50,000. Los alcoholímetros y las refacciones (tipo de producto "Refacciones") NO son equipos.
+- Kabla no acepta mínimos de compra (MOQ) de proveedores; siempre se exige el mejor precio.
 
 ## Agentes
 | Agente | Comando | Qué hace |
